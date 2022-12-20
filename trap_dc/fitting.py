@@ -130,12 +130,10 @@ class PolyFitter:
                               np.reshape(data, -1), rcond=None)[0] * self.scales
         return PolyFitResult(self.orders, res)
 
-def _order_index(orders, order):
-    return _cartesian_to_linear(np.array(orders) + 1, order)
 
 class PolyFitResult:
     def __init__(self, orders, coefficient):
-        self.orders = orders
+        self.orders = np.array(orders)
         self.coefficient = coefficient
     def __assert_order(self, v):
         assert (self.orders == v.orders).all()
@@ -170,7 +168,7 @@ class PolyFitResult:
         return v
 
     def __getitem__(self, order):
-        return self.coefficient[_order_index(self.orders, order)]
+        return self.coefficient[_cartesian_to_linear(self.orders + 1, order)]
 
     def __setitem__(self, order, v):
-        self.coefficient[_order_index(self.orders, order)] = v
+        self.coefficient[_cartesian_to_linear(self.orders + 1, order)] = v
