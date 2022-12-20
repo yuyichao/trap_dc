@@ -30,3 +30,34 @@ def test_linearindex():
                 assert lidx[i, j, k] == i * 3 * 4 + j * 4 + k
     assert list(lidx) == list(range(24))
     assert list(reversed(lidx)) == list(reversed(range(24)))
+
+def test_cartesianindex():
+    cidx = fitting.CartesianIndices((2,))
+    assert len(cidx) == 2
+    assert cidx[0] == (0,)
+    assert cidx[1] == (1,)
+    assert list(cidx) == [(0,), (1,)]
+    assert list(reversed(cidx)) == [(1,), (0,)]
+
+    cidx = fitting.CartesianIndices((2, 4))
+    assert len(cidx) == 8
+    expected = []
+    for i in range(2):
+        for j in range(4):
+            expected.append((i, j))
+            assert cidx[i * 4 + j] == (i, j)
+            assert cidx[i, j] == (i, j)
+    assert list(cidx) == expected
+    assert list(reversed(cidx)) == list(reversed(expected))
+
+    cidx = fitting.CartesianIndices((2, 3, 4))
+    assert len(cidx) == 24
+    expected = []
+    for i in range(2):
+        for j in range(3):
+            for k in range(4):
+                expected.append((i, j, k))
+                assert cidx[i * 3 * 4 + j * 4 + k] == (i, j, k)
+                assert cidx[i, j, k] == (i, j, k)
+    assert list(cidx) == expected
+    assert list(reversed(cidx)) == list(reversed(expected))
