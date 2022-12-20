@@ -91,18 +91,22 @@ def test_fitresult_math():
 
 def test_fitresult_eval():
     # 1 + 2x + x^3
-    res1 = fitting.PolyFitResult((3,), np.array([1, 2, 0, 1]))
-    assert res1(0) == 1
-    assert res1(0.5) == 2.125
-    assert res1(1) == 4
-    assert res1(-1) == -2
+    res1 = fitting.PolyFitResult((3,), np.array([1.0, 2, 0, 1]))
+    for x in np.arange(-2, 2.1, 0.25):
+        assert res1(x) == 1 + 2 * x + x**3
     assert res1[0] == 1
     assert res1[1] == 2
     assert res1[2] == 0
     assert res1[3] == 1
+    res1[0] = 1.5
+    res1[1] = 0
+    res1[2] = -0.5
+    res1[3] = 0.25
+    for x in np.arange(-2, 2.1, 0.25):
+        assert res1(x) == 1.5 - 0.5 * x**2 + 0.25 * x**3
 
     # x^2 + xy - 3x^2y^2 - y
-    res2 = fitting.PolyFitResult((2, 2), np.array([0, -1, 0, # y^n
+    res2 = fitting.PolyFitResult((2, 2), np.array([0.0, -1, 0, # y^n
                                                    0, 1, 0, # x * y^n
                                                    1, 0, -3])) # x^2 * y^n
     for x in np.arange(-2, 2.1, 0.25):
@@ -117,3 +121,16 @@ def test_fitresult_eval():
     assert res2[2, 0] == 1
     assert res2[2, 1] == 0
     assert res2[2, 2] == -3
+
+    res2[0, 0] = 1
+    res2[0, 1] = 0
+    res2[0, 2] = 2
+    res2[1, 0] = -1
+    res2[1, 1] = 0
+    res2[1, 2] = 3
+    res2[2, 0] = 0
+    res2[2, 1] = 0.5
+    res2[2, 2] = 0
+    for x in np.arange(-2, 2.1, 0.25):
+        for y in np.arange(-2, 2.1, 0.25):
+            assert res2(x, y) == 1 + 2 * y**2 - x + 3 * x * y**2 + 0.5 * x**2 * y
