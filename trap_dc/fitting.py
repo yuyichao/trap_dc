@@ -20,6 +20,11 @@ import math
 import numpy as np
 from scipy.special import binom
 
+def to_tuple(v):
+    if isinstance(v, tuple):
+        return v
+    return (v,)
+
 # Both the cartesian indices and linear indicies are 0-based
 # Note that we don't perform most of the boundcheck since I'm too lazy...
 def _linear_to_cartesian(sizes, lidx):
@@ -46,9 +51,10 @@ class LinearIndices:
 
     def __len__(self):
         return math.prod(self.__sizes)
-    def __getitem__(self, *idx):
+    def __getitem__(self, idx):
+        idx = to_tuple(idx)
         if len(idx) == 1:
-            return idx
+            return idx[0]
         return _cartesian_to_linear(self.__sizes, idx)
 
 class CartisianIndicesIter:
@@ -81,9 +87,10 @@ class CartesianIndices:
 
     def __len__(self):
         return math.prod(self.__sizes)
-    def __getitem__(self, *idx):
+    def __getitem__(self, idx):
+        idx = to_tuple(idx)
         if len(idx) == 1:
-            return _linear_to_cartesian(self.__sizes, idx)
+            return _linear_to_cartesian(self.__sizes, idx[0])
         return idx
 
 class PolyFitter:
@@ -171,9 +178,11 @@ class PolyFitResult:
         return v
 
     def __getitem__(self, order):
+        order = to_tuple(order)
         return self.coefficient[_cartesian_to_linear(self.orders + 1, order)]
 
     def __setitem__(self, order, v):
+        order = to_tuple(order)
         self.coefficient[_cartesian_to_linear(self.orders + 1, order)] = v
 
     def _shifted_coefficient(self, shift, order):
