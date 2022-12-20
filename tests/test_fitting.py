@@ -96,6 +96,10 @@ def test_fitresult_eval():
     assert res1(0.5) == 2.125
     assert res1(1) == 4
     assert res1(-1) == -2
+    assert res1[0] == 1
+    assert res1[1] == 2
+    assert res1[2] == 0
+    assert res1[3] == 1
 
     # x^2 + xy - 3x^2y^2 - y
     res2 = fitting.PolyFitResult((2, 2), np.array([0, -1, 0, # y^n
@@ -104,3 +108,12 @@ def test_fitresult_eval():
     for x in np.arange(-2, 2.1, 0.25):
         for y in np.arange(-2, 2.1, 0.25):
             assert res2(x, y) == x**2 + x * y - 3 * x**2 * y**2 - y
+    assert res2[0, 0] == 0
+    assert res2[0, 1] == -1
+    assert res2[0, 2] == 0
+    assert res2[1, 0] == 0
+    assert res2[1, 1] == 1
+    assert res2[1, 2] == 0
+    assert res2[2, 0] == 1
+    assert res2[2, 1] == 0
+    assert res2[2, 2] == -3
