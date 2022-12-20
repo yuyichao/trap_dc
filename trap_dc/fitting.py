@@ -78,3 +78,40 @@ class PolyFitter:
                 order = np.array(ord_cidxs[iorder])
                 self.coefficient[ipos, iorder] = (math.prod(pos**order) *
                                                   self.scales[iorder])
+
+
+class PolyFitResult:
+    def __init__(self, orders, coefficient):
+        self.orders = orders
+        self.coefficient = coefficient
+    def __assert_order(self, v):
+        assert (self.orders == v.orders).all()
+    def __pos__(self):
+        return self
+    def __neg__(self):
+        return PolyFitResult(self.orders, -self.coefficient)
+    def __add__(self, v):
+        self.__assert_order(v)
+        return PolyFitResult(self.orders, self.coefficient + v.coefficient)
+    def __sub__(self, v):
+        self.__assert_order(v)
+        return PolyFitResult(self.orders, self.coefficient - v.coefficient)
+
+    def __mul__(self, s):
+        return PolyFitResult(self.orders, self.coefficient * s)
+    def __rmul__(self, s):
+        return PolyFitResult(self.orders, s * self.coefficient)
+
+    def __truediv__(self, s):
+        return PolyFitResult(self.orders, self.coefficient / s)
+
+    def __call__(self, *pos):
+        assert len(pos) == len(self.orders)
+        sizes = self.orders + 1
+        lindices = _linear_indices(sizes)
+        cindices = _cartesian_indices(sizes)
+        v = 0.0
+        for iorder in lindices:
+            order = Tuple(cindices[iorder])
+            v += self.coefficient[iorder] * math.prod(pos**order)
+        return v
