@@ -2,6 +2,8 @@
 
 from trap_dc import fitting
 
+import numpy as np
+
 def test_linearindex():
     lidx = fitting.LinearIndices((2,))
     assert len(lidx) == 2
@@ -61,3 +63,28 @@ def test_cartesianindex():
                 assert cidx[i, j, k] == (i, j, k)
     assert list(cidx) == expected
     assert list(reversed(cidx)) == list(reversed(expected))
+
+def test_fitresult_math():
+    res1 = fitting.PolyFitResult((1,), np.zeros(2))
+    assert (res1.coefficient == np.zeros(2)).all()
+    res2 = fitting.PolyFitResult((1,), np.array([1, 0]))
+    assert (res2.coefficient == [1, 0]).all()
+    res3 = fitting.PolyFitResult((1,), np.array([0, 2]))
+    assert (res3.coefficient == [0, 2]).all()
+
+    assert +res1 is res1
+    assert ((-res1).coefficient == -(res1.coefficient)).all()
+    assert ((-res2).coefficient == -(res2.coefficient)).all()
+    assert ((-res3).coefficient == -(res3.coefficient)).all()
+
+    assert ((res1 + res2).coefficient == (res2.coefficient)).all()
+    assert ((res2 + res3).coefficient == [1, 2]).all()
+
+    assert ((res1 - res2).coefficient == -(res2.coefficient)).all()
+    assert ((res3 - res1).coefficient == (res3.coefficient)).all()
+    assert ((res2 - res3).coefficient == [1, -2]).all()
+
+    assert ((res2 * 2).coefficient == [2, 0]).all()
+    assert ((5 * res3).coefficient == [0, 10]).all()
+
+    assert ((res2 / 2).coefficient == [0.5, 0]).all()
