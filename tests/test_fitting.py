@@ -88,3 +88,19 @@ def test_fitresult_math():
     assert ((5 * res3).coefficient == [0, 10]).all()
 
     assert ((res2 / 2).coefficient == [0.5, 0]).all()
+
+def test_fitresult_eval():
+    # 1 + 2x + x^3
+    res1 = fitting.PolyFitResult((3,), np.array([1, 2, 0, 1]))
+    assert res1(0) == 1
+    assert res1(0.5) == 2.125
+    assert res1(1) == 4
+    assert res1(-1) == -2
+
+    # x^2 + xy - 3x^2y^2 - y
+    res2 = fitting.PolyFitResult((2, 2), np.array([0, -1, 0, # y^n
+                                                   0, 1, 0, # x * y^n
+                                                   1, 0, -3])) # x^2 * y^n
+    for x in np.arange(-2, 2.1, 0.25):
+        for y in np.arange(-2, 2.1, 0.25):
+            assert res2(x, y) == x**2 + x * y - 3 * x**2 * y**2 - y
