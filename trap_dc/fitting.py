@@ -19,25 +19,71 @@
 import math
 import numpy as np
 
-# 0-based
-def _linear_indices(sizes):
-    return range(math.prod(sizes))
-
-def _append_cartisian_indices(res, prefix, sizes):
-    size0, *rest_sizes = sizes
-    if rest_sizes:
-        for i in range(size0):
-            _append_cartisian_indices(res, (*prefix, i), rest_sizes)
-    else:
-        for i in range(size0):
-            res.append((*prefix, i))
+# Both the cartesian indices and linear indicies are 0-based
+# Note that we don't perform most of the boundcheck since I'm too lazy...
+def _linear_to_cartesian(sizes, lidx):
+    res = ()
+    for s in reversed(sizes):
+        res = (lidx % s, *res)
+        lidx = lidx // s
     return res
 
-# 0-based
-# Compared to the julia one, this is eagerly evaluated since I'm way too lazy
-# to implement something better, especially without generated functions...
-def _cartesian_indices(sizes):
-    return _append_cartisian_indices([], (), sizes)
+def _cartesian_to_linear(sizes, cidx):
+    res = 0
+    for (s, i) in zip(sizes, cidx):
+        res = res * s + i
+    return res
+
+class LinearIndices:
+    def __init__(self, sizes):
+        self.__sizes = sizes
+
+    def __iter__(self):
+        return range(len(self))
+    def __reversed__(self):
+        return reversed(range(len(self)))
+
+    def __len__(self):
+        return math.prod(self.__sizes)
+    def __getitem__(self, *idx):
+        if len(idx) == 1:
+            return idx
+        return _cartesian_to_linear(self.__sizes, idx)
+
+class CartisianIndicesIter:
+    def __init__(self, sizes):
+        self.__sizes = sizes
+        self.__value = np.zeros(len(sizes), dtype='q') # Next value
+
+    def __next__(self):
+        if self.__value[0] >= self.__sizes[0]:
+            raise StopIteration
+        res = tuple(self.__value)
+        for i in reversed(range(len(self.__sizes))):
+            self.__value[i] += 1
+            if self.__value[i] < self.__sizes[i]:
+                break
+            if i == 0:
+                break
+            self.__value[i] = 0
+        return res
+
+    def __iter__(self):
+        return self
+
+class CartesianIndices:
+    def __init__(self, sizes):
+        self.__sizes = sizes
+
+    def __iter__(self):
+        return CartisianIndicesIter(self.__sizes)
+
+    def __len__(self):
+        return math.prod(self.__sizes)
+    def __getitem__(self, *idx):
+        if len(idx) == 1:
+            return _linear_to_cartesian(self.__sizes, idx)
+        return idx
 
 class PolyFitter:
     # center is the origin of the polynomial in index (0-based)
@@ -59,10 +105,10 @@ class PolyFitter:
         npoints = math.prod(sizes)
 
         self.coefficient = np.empty((npoints, nterms))
-        pos_lidxs = _linear_indices(sizes)
-        pos_cidxs = _cartesian_indices(sizes)
-        ord_lidxs = _linear_indices(orders + 1)
-        ord_cidxs = _cartesian_indices(orders + 1)
+        pos_lidxs = LinearIndices(sizes)
+        pos_cidxs = CartesianIndices(sizes)
+        ord_lidxs = LinearIndices(orders + 1)
+        ord_cidxs = CartesianIndices(orders + 1)
         self.scales = np.empty(nterms)
         scale_max = np.maximum((sizes - 1) / 2, 1.0)
         for iorder in ord_lidxs:
@@ -108,8 +154,8 @@ class PolyFitResult:
     def __call__(self, *pos):
         assert len(pos) == len(self.orders)
         sizes = self.orders + 1
-        lindices = _linear_indices(sizes)
-        cindices = _cartesian_indices(sizes)
+        lindices = LinearIndices(sizes)
+        cindices = CartesianIndices(sizes)
         v = 0.0
         for iorder in lindices:
             order = Tuple(cindices[iorder])
