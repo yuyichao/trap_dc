@@ -224,3 +224,46 @@ class RawPotential:
         return (a - self.origin[1]) / self.stride[1]
     def z_axis_to_index(self, a):
         return (a - self.origin[2]) / self.stride[2]
+
+class Potential(RawPotential):
+    def __init_alias(self, electrode_names, trap):
+        raw_electrode_names = _raw_electrode_names(trap)
+        raw_electrode_index = _raw_electrode_index(trap)
+        assert self.electrodes == len(raw_electrode_names)
+        new_electrodes = len(electrode_names)
+        new_data = np.empty((new_electrodes, self.nx, self.ny, self.nz))
+        electrode_index = {}
+        for i in range(new_electrodes):
+            electrodes = electrode_names[i]
+            first = True
+            for elec in electrodes:
+                electrode_index[elec] = i
+                raw_idx = raw_electrode_index[elec]
+                if first:
+                    new_data[i, :, :, :] = self.data[raw_idx, :, :, :]
+                    first = False
+                else:
+                    new_data[i, :, :, :] += self.data[raw_idx, :, :, :]
+            assert not first
+        self.data = new_data
+        self.electrodes = new_electrodes
+        self.electrode_index = electrode_index
+        self.electrode_names = electrode_names
+
+    @classmethod
+    def import_v0(cls, filename, trap="phoenix", aliases=None, electrode_names=None):
+        self = super(Potential, cls).import_v0(filename)
+        self.__init_alias(_get_electrode_names(aliases, electrode_names, trap), trap)
+        return self
+
+    @classmethod
+    def import_v1(cls, filename, trap="phoenix", aliases=None, electrode_names=None):
+        self = super(Potential, cls).import_v1(filename)
+        self.__init_alias(_get_electrode_names(aliases, electrode_names, trap), trap)
+        return self
+
+    @classmethod
+    def import_64(cls, filename, trap="phoenix", aliases=None, electrode_names=None):
+        self = super(Potential, cls).import_64(filename)
+        self.__init_alias(_get_electrode_names(aliases, electrode_names, trap), trap)
+        return self
