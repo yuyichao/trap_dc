@@ -125,6 +125,11 @@ class PolyFitter:
                 self.coefficient[ipos, iorder] = (math.prod(pos**order) *
                                                   self.scales[iorder])
 
+    def fit(self, data):
+        res = np.linalg.lstsq(self.coefficient,
+                              np.reshape(data, -1), rcond=None)[0] * self.scales
+        return PolyFitResult(self.orders, res)
+
 def _order_index(orders, order):
     return _cartesian_to_linear(np.array(orders) + 1, order)
 
