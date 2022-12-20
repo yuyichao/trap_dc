@@ -106,6 +106,14 @@ def _alias_to_names(_aliases, trap):
         electrode_names[new_id].append(raw_electrode_names[k])
     return electrode_names
 
+def _get_electrode_names(aliases, electrode_names, trap):
+    if electrode_names is not None:
+        assert aliases is None
+        return electrode_names
+    if aliases is None:
+        return [[name] for name in _raw_electrode_names(trap)]
+    return _aliases_to_names(aliases, trap)
+
 class RawPotential:
     @classmethod
     def import_v0(cls, filename):
