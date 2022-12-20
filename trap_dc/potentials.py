@@ -210,3 +210,17 @@ class RawPotential:
                 raise ValueError("Did not find the right number of samples")
             self.data = np.reshape(data, (self.electrodes, self.nx, self.ny, self.nz))
         return self
+
+    def x_index_to_axis(self, i):
+        return i * self.stride[0] + self.origin[0]
+    def y_index_to_axis(self, i):
+        return i * self.stride[1] + self.origin[1]
+    def z_index_to_axis(self, i):
+        return i * self.stride[2] + self.origin[2]
+
+    def x_axis_to_index(self, a):
+        return (a - self.origin[0]) / self.stride[0]
+    def y_axis_to_index(self, a):
+        return (a - self.origin[1]) / self.stride[1]
+    def z_axis_to_index(self, a):
+        return (a - self.origin[2]) / self.stride[2]
