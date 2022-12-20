@@ -125,6 +125,8 @@ class PolyFitter:
                 self.coefficient[ipos, iorder] = (math.prod(pos**order) *
                                                   self.scales[iorder])
 
+def _order_index(orders, order):
+    return _cartesian_to_linear(np.array(orders) + 1, order)
 
 class PolyFitResult:
     def __init__(self, orders, coefficient):
@@ -161,3 +163,9 @@ class PolyFitResult:
             order = Tuple(cindices[iorder])
             v += self.coefficient[iorder] * math.prod(pos**order)
         return v
+
+    def __getitem__(self, order):
+        return self.coefficient[_order_index(self.orders, order)]
+
+    def __setitem__(self, order, v):
+        self.coefficient[_order_index(self.orders, order)] = v
