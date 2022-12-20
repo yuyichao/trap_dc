@@ -18,6 +18,7 @@
 
 import math
 import numpy as np
+from scipy.special import binom
 
 # Both the cartesian indices and linear indicies are 0-based
 # Note that we don't perform most of the boundcheck since I'm too lazy...
@@ -130,6 +131,8 @@ class PolyFitter:
                               np.reshape(data, -1), rcond=None)[0] * self.scales
         return PolyFitResult(self.orders, res)
 
+def _shifted_term(max_order, term_order, shift):
+    return shift**(max_order - term_order) * binom(max_order, term_order)
 
 class PolyFitResult:
     def __init__(self, orders, coefficient):
@@ -172,3 +175,29 @@ class PolyFitResult:
 
     def __setitem__(self, order, v):
         self.coefficient[_cartesian_to_linear(self.orders + 1, order)] = v
+
+    def _shifted_coefficient(self, shift, order):
+        v = 0.0
+        sizes = self.orders + 1
+        lindices = LinearIndices(sizes)
+        cindices = CartesianIndices(sizes)
+        for lidx in lindices:
+            term_order = cindices[lidx]
+            if (term_order >= order).all():
+                continue
+            v += math.prod(_shifted_term(t, o, s) for (t, o, s)
+                           in zip(term_order, order, shift)) * self.coefficient[lidx]
+        return v
+
+    # shift the solution to get the polynomial representing the same function
+    # but with the origin shifted to `shift`.
+    # `x` with a shift of `1` becomes `x + 1`.
+    def shift(self, shift):
+        coefficient = np.empty(self.coefficient.shape)
+        sizes = self.orders + 1
+        lindices = LinearIndices(sizes)
+        cindices = CartesianIndices(sizes)
+        for lidx in lindices:
+            order = cindices[lidx]
+            coefficient[lidx] = self.shifted_coefficient(shift, order)
+        return PolyFitResult(self.orders, coefficient)
