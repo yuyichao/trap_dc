@@ -172,8 +172,9 @@ class PolyFitResult:
         lindices = LinearIndices(sizes)
         cindices = CartesianIndices(sizes)
         v = 0.0
+        pos = np.array(pos)
         for iorder in lindices:
-            order = Tuple(cindices[iorder])
+            order = cindices[iorder]
             v += self.coefficient[iorder] * math.prod(pos**order)
         return v
 
