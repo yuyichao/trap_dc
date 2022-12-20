@@ -17,6 +17,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 import math
+import numpy as np
 
 # 0-based
 def _linear_indices(sizes):
@@ -37,3 +38,43 @@ def _append_cartisian_indices(res, prefix, sizes):
 # to implement something better, especially without generated functions...
 def _cartesian_indices(sizes):
     return _append_cartisian_indices([], (), sizes)
+
+class PolyFitter:
+    # center is the origin of the polynomial in index (0-based)
+    def __init__(self, orders, sizes=None, center=None):
+        orders = np.array(orders, dtype='q')
+        self.orders = orders
+        if sizes is None:
+            sizes = orders + 1
+        else:
+            sizes = np.array(sizes, dtype='q')
+        self.sizes = sizes
+        if center is None:
+            center = (sizes - 1) / 2
+        else:
+            center = np.array(center, dtype='d')
+
+        assert (sizes > orders).all()
+        nterms = math.prod(orders + 1)
+        npoints = math.prod(sizes)
+
+        self.coefficient = np.empty((npoints, nterms))
+        pos_lidxs = _linear_indices(sizes)
+        pos_cidxs = _cartesian_indices(sizes)
+        ord_lidxs = _linear_indices(orders + 1)
+        ord_cidxs = _cartesian_indices(orders + 1)
+        self.scales = np.empty(nterms)
+        scale_max = np.maximum((sizes - 1) / 2, 1.0)
+        for iorder in ord_lidxs:
+            order = np.array(ord_cidxs[iorder])
+            self.scales[iorder] = 1 / math.prod(scale_max**order)
+
+        # Index for position
+        for ipos in pos_lidxs:
+            # Position of the point, with the origin in the middle of the grid.
+            pos = np.array(pos_cidxs[ipos]) - center
+            # Index for the polynomial order
+            for iorder in ord_lidxs:
+                order = np.array(ord_cidxs[iorder])
+                self.coefficient[ipos, iorder] = (math.prod(pos**order) *
+                                                  self.scales[iorder])
