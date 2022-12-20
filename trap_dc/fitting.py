@@ -45,9 +45,9 @@ class LinearIndices:
         self.__sizes = sizes
 
     def __iter__(self):
-        return range(len(self))
+        return iter(range(len(self)))
     def __reversed__(self):
-        return reversed(range(len(self)))
+        return iter(reversed(range(len(self))))
 
     def __len__(self):
         return math.prod(self.__sizes)
