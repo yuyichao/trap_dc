@@ -22,6 +22,7 @@ import os
 import os.path
 root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
+import collections
 import h5py
 import numpy as np
 from scipy.optimize import fsolve
@@ -96,3 +97,73 @@ class CenterTracker:
         c_ub = xidx - lb_idx
         c_lb = ub_idx - xidx
         return y_lb * c_lb + y_ub * c_ub, z_lb * c_lb + z_ub * c_ub
+
+CompensateTerms1 = collections.namedtuple("CompensateTerms1",
+                                          ["dx", "dy", "dz",
+                                           "xy", "yz", "zx",
+                                           "z2", "x2", "x3", "x4"])
+
+# Terms we care about
+# x, y, z, xy, yz, xz, (z^2 - y^2) / 2, (x^2 - (y^2 + z^2) / 2) / 2, x^3 / 3!, x^4 / 4!
+# Since we care about the symmetry of the x^2 and z^2 term,
+# we actually do need to scale the x, y and z correctly.
+# stride should be in um, voltage should be in V
+def get_compensate_terms1(res, stride):
+    # axis order of fitting result and stride are both is x, y, z
+    raw_x = res[1, 0, 0]
+    raw_y = res[0, 1, 0]
+    raw_z = res[0, 0, 1]
+
+    raw_xy = res[1, 1, 0]
+    raw_yz = res[0, 1, 1]
+    raw_zx = res[1, 0, 1]
+
+    raw_x2 = res[2, 0, 0]
+    raw_y2 = res[0, 2, 0]
+    raw_z2 = res[0, 0, 2]
+
+    raw_x3 = res[3, 0, 0]
+    raw_x4 = res[4, 0, 0]
+
+    scaled_x = raw_x / stride[0]
+    scaled_y = raw_y / stride[1]
+    scaled_z = raw_z / stride[2]
+
+    # We need to divide the xy/yz/zx terms by 2 relative to the x2, y2, z2 terms.
+    # This makes sure that, e.g., the z^2 term is a direct rotation of the
+    # xy/yz/zx terms.
+    scaled_xy = raw_xy / stride[0] / stride[1]
+    scaled_yz = raw_yz / stride[1] / stride[2]
+    scaled_zx = raw_zx / stride[2] / stride[0]
+
+    scaled_x2 = raw_x2 / stride[0]**2 * 2
+    scaled_y2 = raw_y2 / stride[1]**2 * 2
+    scaled_z2 = raw_z2 / stride[2]**2 * 2
+
+    scaled_x3 = raw_x3 / stride[0]**3 * 6
+    scaled_x4 = raw_x4 / stride[0]**4 * 24
+
+    # The two legal quadratic terms are `x^2 - (y^2 + z^2) / 2` and `z^2 - y^2`
+    # which are also orthogonal to each other.
+    # The orthogonal illegal term is `x^2 + y^2 + z^2`.
+    # Here we just need to find the transfermation to go from the taylor expansion
+    # basis to the new basis.
+    # Since the three terms are orthogonal, we can just compute the dot product
+    # with these three terms and apply the correct normalization coefficient.
+    xx = (2 * scaled_x2 - scaled_y2 - scaled_z2) / 3
+    zz = (scaled_z2 - scaled_y2) / 2
+
+    # Current units are V/um^n
+    # Expected units
+    # DX/DY/DZ: V/m
+    # XY, YZ, ZX, ZZ, XX: 525 uV / (2.74 um)^2
+    # X3: 525 uV / (2.74 um)^3
+    # X4: 525 uV / (2.74 um)^4
+    scale_1 = 1e6
+    scale_2 = (l_unit_um**2 / V_unit)
+    scale_3 = (l_unit_um**3 / V_unit)
+    scale_4 = (l_unit_um**4 / V_unit)
+    return CompensateTerms1(scaled_x * scale_1, scaled_y * scale_1, scaled_z * scale_1,
+                            scaled_xy * scale_2, scaled_yz * scale_2,
+                            scaled_zx * scale_2, zz * scale_2,
+                            xx * scale_2, scaled_x3 * scale_3, scaled_x4 * scale_4)
