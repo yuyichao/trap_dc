@@ -300,3 +300,55 @@ def test_fit_cache():
             for xfit_center in np.linspace(-5, 35, 7):
                 for yfit_center in np.linspace(-10, 110, 7):
                     check_fit2(xpos, ypos, fit_center=(xfit_center, yfit_center))
+
+def test_gradient():
+    # 1 + 2x + x^3
+    res1 = fitting.PolyFitResult((3,), np.array([1.0, 2, 0, 1]))
+    for x in np.arange(-2, 2.1, 0.25):
+        assert res1.gradient(0, (x,)) == 2 + 3 * x**2
+
+    # x^2 + xy - 3x^2y^2 - y
+    res2 = fitting.PolyFitResult((2, 2), np.array([0.0, -1, 0, # y^n
+                                                   0, 1, 0, # x * y^n
+                                                   1, 0, -3])) # x^2 * y^n
+    for x in np.arange(-2, 2.1, 0.25):
+        for y in np.arange(-2, 2.1, 0.25):
+            assert res2.gradient(0, (x, y)) == 2 * x + y - 6 * x * y**2
+            assert res2.gradient(1, (x, y)) == x - 6 * x**2 * y - 1
+
+    fitter1 = fitting.PolyFitter((4,), sizes=(11,))
+    x1 = np.arange(101)
+    def f1(x):
+        return 1 - x - x * 2 + x**2 / 3 + 0.4 * x**4
+    def f1_dx(x):
+        return -1 - 2 + 2 * x / 3 + 0.4 * 4 * x**3
+    v1 = f1(x1)
+    fit_cache1 = fitting.PolyFitCache(fitter1, v1)
+    for pos in np.linspace(-20, 120):
+        assert fit_cache1.gradient(0, (pos,)) == pytest.approx(f1_dx(pos))
+
+    fitter2 = fitting.PolyFitter((4, 5), sizes=(11, 20))
+    x2, y2 = np.meshgrid(np.arange(30), np.arange(100), indexing='ij')
+    def f2(x, y):
+        x = x - 15
+        y = y - 50
+        return (1 + x + y / 2 + x * 2 + x * y + x**2 / 3 + (x / 5)**2 * (y / 10)**3
+                    + (x / 5)**4 * (y / 10)**5)
+    def f2_dx(x, y):
+        x = x - 15
+        y = y - 50
+        return (1 + 2 + y + 2 * x / 3 + 2 / 5 * (x / 5) * (y / 10)**3
+                    + 4 / 5 * (x / 5)**3 * (y / 10)**5)
+    def f2_dy(x, y):
+        x = x - 15
+        y = y - 50
+        return (1 / 2 + x + 3 / 10 * (x / 5)**2 * (y / 10)**2
+                    + 5 / 10 * (x / 5)**4 * (y / 10)**4)
+    v2 = f2(x2, y2)
+    fit_cache2 = fitting.PolyFitCache(fitter2, v2)
+    for xpos in np.linspace(-5, 35):
+        for ypos in np.linspace(-10, 110):
+            assert (fit_cache2.gradient(0, (xpos, ypos)) ==
+                        pytest.approx(f2_dx(xpos, ypos)))
+            assert (fit_cache2.gradient(1, (xpos, ypos)) ==
+                        pytest.approx(f2_dy(xpos, ypos)))

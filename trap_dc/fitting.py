@@ -215,6 +215,10 @@ class PolyFitResult:
             coefficient[lidx] = self._shifted_coefficient(shift, order)
         return PolyFitResult(self.orders, coefficient)
 
+    def gradient(self, dim, pos):
+        order = tuple(int(i == dim) for i in range(len(self.orders)))
+        return self._shifted_coefficient(pos, order)
+
 # pos is in index unit
 def _best_fit_idx(ntotal, kernel_size, pos):
     # for fit at `index`, the data covered is `index:(index + kernel_size - 1)`
@@ -264,3 +268,7 @@ class PolyFitCache:
                      in zip(data_sizes, kernel_sizes, fit_center))
         fit = self.__get_internal(idxs)
         return fit._shifted_coefficient(pos - (kernel_sizes - 1) / 2 - idxs, orders)
+
+    def gradient(self, dim, pos):
+        order = tuple(int(i == dim) for i in range(len(self.fitter.sizes)))
+        return self.get_single(pos, order)
