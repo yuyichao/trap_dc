@@ -167,3 +167,7 @@ def get_compensate_terms1(res, stride):
                             scaled_xy * scale_2, scaled_yz * scale_2,
                             scaled_zx * scale_2, zz * scale_2,
                             xx * scale_2, scaled_x3 * scale_3, scaled_x4 * scale_4)
+
+def compensate_fitter1(potential, sizes=(129, 5, 5)):
+    fitter = fitting.PolyFitter(4, 2, 2, sizes=sizes)
+    return potential.get_cache(fitter)
