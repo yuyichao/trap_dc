@@ -252,3 +252,51 @@ def test_fitter():
                     assert c == pytest.approx(-1)
                 else:
                     assert c == pytest.approx(0, abs=1e-5)
+
+def test_fit_cache():
+    def check_fit(fit_cache, pos, **kwargs):
+        fit = fit_cache.get(pos, **kwargs)
+        for order in fitting.CartesianIndices(fit_cache.fitter.orders + 1):
+            fit_single = fit_cache.get_single(pos, order, **kwargs)
+            fit_full = fit[order]
+            assert fit_single == pytest.approx(fit_full, abs=1e-5)
+        return fit
+
+    fitter1 = fitting.PolyFitter((4,), sizes=(11,))
+    x1 = np.arange(101)
+    def f1(x):
+        return 1 - x - x * 2 + x**2 / 3 + 0.4 * x**4
+    v1 = f1(x1)
+    fit_cache1 = fitting.PolyFitCache(fitter1, v1)
+    def check_fit1(pos, **kwargs):
+        fit = check_fit(fit_cache1, (pos,), **kwargs)
+        assert fit[4] == pytest.approx(0.4, abs=1e-6)
+        for x in np.linspace(-10, 10):
+            assert fit(x) == pytest.approx(f1(x + pos), abs=0.1)
+    for pos in np.linspace(-20, 120, 20):
+        check_fit1(pos)
+        for fit_center in np.linspace(-20, 120, 20):
+            check_fit1(pos, fit_center=(fit_center,))
+
+    fitter2 = fitting.PolyFitter((4, 5), sizes=(11, 20))
+    x2, y2 = np.meshgrid(np.arange(30), np.arange(100), indexing='ij')
+    def f2(x, y):
+        x = x - 15
+        y = y - 50
+        return (1 + x + y / 2 + x * 2 + x * y + x**2 / 3 + (x / 5)**2 * (y / 10)**3
+                    + (x / 5)**4 * (y / 10)**5)
+    v2 = f2(x2, y2)
+    fit_cache2 = fitting.PolyFitCache(fitter2, v2)
+    def check_fit2(xpos, ypos, **kwargs):
+        fit = check_fit(fit_cache2, (xpos, ypos), **kwargs)
+        assert fit[4, 5] == pytest.approx(1 / 5**4 / 10**5, abs=1e-8)
+        for x in np.linspace(-2, 2, 10):
+            for y in np.linspace(-2, 2, 10):
+                assert fit(x, y) == pytest.approx(f2(x + xpos, y + ypos),
+                                                     abs=1.5, rel=2e-3)
+    for xpos in np.linspace(-5, 35, 7):
+        for ypos in np.linspace(-10, 110, 7):
+            check_fit2(xpos, ypos)
+            for xfit_center in np.linspace(-5, 35, 7):
+                for yfit_center in np.linspace(-10, 110, 7):
+                    check_fit2(xpos, ypos, fit_center=(xfit_center, yfit_center))
