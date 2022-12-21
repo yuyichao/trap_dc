@@ -16,7 +16,7 @@
 # License along with this library. If not,
 # see <http://www.gnu.org/licenses/>.
 
-from . import fitting
+from . import fitting, mapping
 
 import os
 import os.path
@@ -169,5 +169,22 @@ def get_compensate_terms1(res, stride):
                             xx * scale_2, scaled_x3 * scale_3, scaled_x4 * scale_4)
 
 def compensate_fitter1(potential, sizes=(129, 5, 5)):
-    fitter = fitting.PolyFitter(4, 2, 2, sizes=sizes)
+    fitter = fitting.PolyFitter((4, 2, 2), sizes=sizes)
     return potential.get_cache(fitter)
+
+def get_compensate_coeff1(cache, pos):
+    # pos is in xyz index
+    x_coord = cache.potential.x_index_to_axis(pos[0]) * 1000
+    ele_select = mapping.find_electrodes(cache.potential.electrode_index,
+                                         x_coord, min_num=20, min_dist=350)
+    ele_select = list(ele_select)
+    ele_select.sort()
+    fits = [cache.get(e, pos) for e in ele_select]
+
+    # Change stride to um in unit
+    stride_um = np.array(cache.potential.stride) * 1000
+    nfits = len(fits)
+    coefficient = np.empty((10, nfits))
+    for i in range(nfits):
+        coefficient[:, i] = tuple(get_compensate_terms1(fits[i], stride_um))
+    return ele_select, coefficient
