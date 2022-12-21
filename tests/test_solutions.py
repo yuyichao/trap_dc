@@ -33,3 +33,21 @@ def test_units():
 
     assert solutions.V_unit_uV == pytest.approx(525.3, abs=0.2)
     assert solutions.l_unit_um == pytest.approx(2.741, abs=0.002)
+
+def test_center_tracker():
+    center_phoenix = solutions.CenterTracker(trap="phoenix")
+    assert center_phoenix.get(1000.5) == pytest.approx(center_phoenix.get(1000),
+                                                       abs=0.005)
+    assert center_phoenix.get(-1) == center_phoenix.get(-1.5)
+    assert center_phoenix.get(10000) == center_phoenix.get(20000)
+
+    center_peregrine = solutions.CenterTracker(trap="peregrine")
+    assert center_peregrine.get(1000.5) == pytest.approx(center_peregrine.get(1000),
+                                                         abs=0.005)
+    assert center_peregrine.get(-1) == center_peregrine.get(-1.5)
+    assert center_peregrine.get(10000) == center_peregrine.get(20000)
+
+    center_hoa = solutions.CenterTracker(trap="hoa")
+    assert center_hoa.get(1000.5) == pytest.approx(center_hoa.get(1000), abs=0.005)
+    assert center_hoa.get(-1) == center_hoa.get(-1.5)
+    assert center_hoa.get(10000) == center_hoa.get(20000)

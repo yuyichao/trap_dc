@@ -18,6 +18,11 @@
 
 from . import fitting
 
+import os
+import os.path
+root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+import h5py
 import numpy as np
 from scipy.optimize import fsolve
 
@@ -66,3 +71,28 @@ del B
 
 l_unit_um = l_unit * 1e6 # um
 V_unit_uV = V_unit * 1e6 # uV
+
+class CenterTracker:
+    def __init__(self, trap=None, filename=None):
+        if filename is None:
+            if trap is None:
+                raise ValueError('Must specify either "trap" or "filename"')
+            filename = os.path.join(root_path, "data", f"rf_center_{trap}.h5")
+        with h5py.File(filename, 'r') as fh:
+            self.yz_index = np.array(fh['yz_index'])
+
+    def get(self, xidx):
+        # return (y, z)
+        nx = self.yz_index.shape[1]
+        lb_idx = min(max(int(np.floor(xidx)), 0), nx - 1)
+        ub_idx = min(max(int(np.ceil(xidx)), 0), nx - 1)
+        y_lb = self.yz_index[0, lb_idx]
+        z_lb = self.yz_index[1, lb_idx]
+        if lb_idx == ub_idx:
+            return y_lb, z_lb
+        assert ub_idx == lb_idx + 1
+        y_ub = self.yz_index[0, ub_idx]
+        z_ub = self.yz_index[1, ub_idx]
+        c_ub = xidx - lb_idx
+        c_lb = ub_idx - xidx
+        return y_lb * c_lb + y_ub * c_ub, z_lb * c_lb + z_ub * c_ub
