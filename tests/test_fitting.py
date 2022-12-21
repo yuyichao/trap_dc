@@ -3,6 +3,7 @@
 from trap_dc import fitting
 
 import numpy as np
+import pytest
 
 def test_linearindex():
     lidx = fitting.LinearIndices((2,))
@@ -161,3 +162,10 @@ def test_fitresult_shift():
     for x in np.arange(-2, 2.1, 0.25):
         for y in np.arange(-2, 2.1, 0.25):
             assert res2_4(x - 3, y + 1.25) == x**2 + x * y - 3 * x**2 * y**2 - y
+
+def test_fitter():
+    fitter1 = fitting.PolyFitter((2,))
+    x1 = np.array([-1, 0, 1])
+    y1 = 1.25 + x1 / 2 + x1**2 * 3
+    res1 = fitter1.fit(y1)
+    assert res1.coefficient == pytest.approx([1.25, 0.5, 3])
