@@ -44,3 +44,25 @@ def find_all_flat_points(all_data, init=None):
         init = find_flat_point(all_data[idx_range], init=init)
         all_res[:, i] = init
     return all_res
+
+# EURIQA unit:
+# Unit such that electric potential that creates 1MHz trapping frequency
+# for Yb171 has the form X^2/2,
+# and the electric potential between two ions is 1/r.
+
+N_A = 6.02214076e23
+m_Yb171 = 170.9363315e-3 / N_A # kg
+q_e = 1.60217663e-19 # C
+epsilon_0 = 8.8541878128e-12
+
+A = m_Yb171 * (2 * np.pi * 1e6)**2 / q_e
+B = q_e / (4 * np.pi * epsilon_0)
+
+V_unit = np.cbrt(A * B**2) # V
+l_unit = np.cbrt(B / A) # m
+
+del A
+del B
+
+l_unit_um = l_unit * 1e6 # um
+V_unit_uV = V_unit * 1e6 # uV

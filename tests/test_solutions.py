@@ -26,3 +26,10 @@ def test_find_flat():
         for zi in range(z.shape[0]):
             assert xy0[0, zi] == pytest.approx(x0_z(zi), abs=2e-3)
             assert xy0[1, zi] == pytest.approx(y0_z(zi), abs=2e-3)
+
+def test_units():
+    assert solutions.V_unit_uV == solutions.V_unit * 1e6
+    assert solutions.l_unit_um == solutions.l_unit * 1e6
+
+    assert solutions.V_unit_uV == pytest.approx(525.3, abs=0.2)
+    assert solutions.l_unit_um == pytest.approx(2.741, abs=0.002)
