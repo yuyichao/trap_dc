@@ -134,3 +134,30 @@ def test_fitresult_eval():
     for x in np.arange(-2, 2.1, 0.25):
         for y in np.arange(-2, 2.1, 0.25):
             assert res2(x, y) == 1 + 2 * y**2 - x + 3 * x * y**2 + 0.5 * x**2 * y
+
+def test_fitresult_shift():
+    res1 = fitting.PolyFitResult((3,), np.array([1.0, -1, 0, 1]))
+    for x in np.arange(-2, 2.1, 0.25):
+        assert res1(x) == 1 - x + x**3
+    res1_2 = res1.shift((1.5,))
+    for x in np.arange(-2, 2.1, 0.25):
+        assert res1_2(x - 1.5) == 1 - x + x**3
+
+    res2 = fitting.PolyFitResult((2, 2), np.array([0.0, -1, 0, # y^n
+                                                   0, 1, 0, # x * y^n
+                                                   1, 0, -3])) # x^2 * y^n
+    for x in np.arange(-2, 2.1, 0.25):
+        for y in np.arange(-2, 2.1, 0.25):
+            assert res2(x, y) == x**2 + x * y - 3 * x**2 * y**2 - y
+    res2_2 = res2.shift((1.5, -0.5))
+    for x in np.arange(-2, 2.1, 0.25):
+        for y in np.arange(-2, 2.1, 0.25):
+            assert res2_2(x - 1.5, y + 0.5) == x**2 + x * y - 3 * x**2 * y**2 - y
+    res2_3 = res2.shift((1.5, 0))
+    for x in np.arange(-2, 2.1, 0.25):
+        for y in np.arange(-2, 2.1, 0.25):
+            assert res2_3(x - 1.5, y) == x**2 + x * y - 3 * x**2 * y**2 - y
+    res2_4 = res2_3.shift((1.5, -1.25))
+    for x in np.arange(-2, 2.1, 0.25):
+        for y in np.arange(-2, 2.1, 0.25):
+            assert res2_4(x - 3, y + 1.25) == x**2 + x * y - 3 * x**2 * y**2 - y
