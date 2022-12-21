@@ -211,3 +211,53 @@ class PolyFitResult:
             order = cindices[lidx]
             coefficient[lidx] = self._shifted_coefficient(shift, order)
         return PolyFitResult(self.orders, coefficient)
+
+# pos is in index unit
+def _best_fit_idx(ntotal, kernel_size, pos):
+    # for fit at `index`, the data covered is `index:(index + kernel_size - 1)`
+    # with the center at index `index + (kernel_size - 1) / 2`.
+    # Therefore, the ideal index to use for `pos` is `pos - (kernel_size - 1) / 2`
+    idx = round(pos - (kernel_size - 1) / 2)
+    if idx <= 0:
+        return 0
+    elif idx >= ntotal - kernel_size:
+        return ntotal - kernel_size
+    return idx
+
+class PolyFitCache:
+    def __init__(self, fitter, data):
+        self.fitter = fitter
+        self.data = data
+        self.cache = {}
+
+    def __get_internal(self, idx):
+        # idx is the start index
+        if idx in self.cache:
+            return self.cache[idx]
+        data = self.data[tuple(slice(i, i + s) for (i, s)
+                         in zip(idx, self.fitter.sizes))]
+        res = self.fitter.fit(data)
+        self.cache[idx] = res
+        return res
+
+    def get(self, pos, fit_center=None):
+        pos = np.array(pos)
+        if fit_center is None:
+            fit_center = pos
+        kernel_sizes = np.array(self.fitter.sizes)
+        data_sizes = self.data.shape
+        idxs = tuple(_best_fit_idx(n, k, p) for (n, k, p)
+                     in zip(data_sizes, kernel_sizes, fit_center))
+        fit = self.__get_internal(idxs)
+        return fit.shift(pos - (kernel_sizes - 1) / 2 - idxs)
+
+    def get_single(self, pos, orders, fit_center=None):
+        pos = np.array(pos)
+        if fit_center is None:
+            fit_center = pos
+        kernel_sizes = np.array(self.fitter.sizes)
+        data_sizes = self.data.shape
+        idxs = tuple(_best_fit_idx(n, k, p) for (n, k, p)
+                     in zip(data_sizes, kernel_sizes, fit_center))
+        fit = self.__get_internal(idxs)
+        return fit._shifted_coefficient(pos - (kernel_sizes - 1) / 2 - idxs, orders)
