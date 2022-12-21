@@ -169,3 +169,86 @@ def test_fitter():
     y1 = 1.25 + x1 / 2 + x1**2 * 3
     res1 = fitter1.fit(y1)
     assert res1.coefficient == pytest.approx([1.25, 0.5, 3])
+
+    fitter1 = fitting.PolyFitter((4,), sizes=(11,))
+    x1 = np.arange(-5, 6)
+    y1 = 1 - x1 * 2 + x1**2 / 3 + 0.4 * x1**4
+    res1 = fitter1.fit(y1)
+    assert res1.coefficient == pytest.approx([1, -2, 1 / 3, 0, 0.4])
+
+    fitter1 = fitting.PolyFitter((4,), sizes=(11,), center=(2.5,))
+    x1 = np.arange(11) - 2.5
+    y1 = 1 - x1 * 2 + x1**2 / 3 + 0.4 * x1**4
+    res1 = fitter1.fit(y1)
+    assert res1.coefficient == pytest.approx([1, -2, 1 / 3, 0, 0.4])
+
+    fitter2 = fitting.PolyFitter((2, 2, 4))
+    x2, y2, z2 = np.meshgrid(np.arange(3) - 1, np.arange(3) - 1, np.arange(5) - 2, indexing='ij')
+    v2 = -y2**2 - 3 * z2 + y2**2 * z2**3 - 3 * x2**2 * z2**3 + y2**2 * z2**4 - x2**2 * y2**2 * z2**4
+    res2 = fitter2.fit(v2)
+    for i in range(3):
+        for j in range(3):
+            for k in range(5):
+                c = res2[i, j, k]
+                if i == 0 and j == 2 and k == 0:
+                    assert c == pytest.approx(-1)
+                elif i == 0 and j == 0 and k == 1:
+                    assert c == pytest.approx(-3)
+                elif i == 0 and j == 2 and k == 3:
+                    assert c == pytest.approx(1)
+                elif i == 2 and j == 0 and k == 3:
+                    assert c == pytest.approx(-3)
+                elif i == 0 and j == 2 and k == 4:
+                    assert c == pytest.approx(1)
+                elif i == 2 and j == 2 and k == 4:
+                    assert c == pytest.approx(-1)
+                else:
+                    assert c == pytest.approx(0)
+
+    fitter2 = fitting.PolyFitter((2, 2, 4), sizes=(10, 21, 51))
+    x2, y2, z2 = np.meshgrid(np.arange(10) - 4.5, np.arange(21) - 10,
+                             np.arange(51) - 25, indexing='ij')
+    v2 = -y2**2 - 3 * z2 + y2**2 * z2**3 - 3 * x2**2 * z2**3 + y2**2 * z2**4 - x2**2 * y2**2 * z2**4
+    res2 = fitter2.fit(v2)
+    for i in range(3):
+        for j in range(3):
+            for k in range(5):
+                c = res2[i, j, k]
+                if i == 0 and j == 2 and k == 0:
+                    assert c == pytest.approx(-1)
+                elif i == 0 and j == 0 and k == 1:
+                    assert c == pytest.approx(-3)
+                elif i == 0 and j == 2 and k == 3:
+                    assert c == pytest.approx(1)
+                elif i == 2 and j == 0 and k == 3:
+                    assert c == pytest.approx(-3)
+                elif i == 0 and j == 2 and k == 4:
+                    assert c == pytest.approx(1)
+                elif i == 2 and j == 2 and k == 4:
+                    assert c == pytest.approx(-1)
+                else:
+                    assert c == pytest.approx(0, abs=1e-5)
+
+    fitter2 = fitting.PolyFitter((2, 2, 4), sizes=(10, 21, 51), center=(3.4, 12.6, 30))
+    x2, y2, z2 = np.meshgrid(np.arange(10) - 3.4, np.arange(21) - 12.6,
+                             np.arange(51) - 30, indexing='ij')
+    v2 = -y2**2 - 3 * z2 + y2**2 * z2**3 - 3 * x2**2 * z2**3 + y2**2 * z2**4 - x2**2 * y2**2 * z2**4
+    res2 = fitter2.fit(v2)
+    for i in range(3):
+        for j in range(3):
+            for k in range(5):
+                c = res2[i, j, k]
+                if i == 0 and j == 2 and k == 0:
+                    assert c == pytest.approx(-1)
+                elif i == 0 and j == 0 and k == 1:
+                    assert c == pytest.approx(-3)
+                elif i == 0 and j == 2 and k == 3:
+                    assert c == pytest.approx(1)
+                elif i == 2 and j == 0 and k == 3:
+                    assert c == pytest.approx(-3)
+                elif i == 0 and j == 2 and k == 4:
+                    assert c == pytest.approx(1)
+                elif i == 2 and j == 2 and k == 4:
+                    assert c == pytest.approx(-1)
+                else:
+                    assert c == pytest.approx(0, abs=1e-5)
