@@ -19,6 +19,8 @@
 import numpy as np
 import struct
 
+from .fitting import PolyFitCache
+
 ##
 # Electrode names for Phoenix and Peregrine
 _raw_electrode_names_px = ["GND", "RF"]
@@ -283,3 +285,35 @@ class Potential(RawPotential):
         self = super(Potential, cls).import_64(filename)
         self.__init_alias(_get_electrode_names(aliases, electrode_names, trap), trap)
         return self
+
+    def get_cache(self, fitter):
+        return FitCache(fitter, self)
+
+class FitCache:
+    def __init__(self, fitter, potential):
+        self.fitter = fitter
+        self.potential = potential
+        self.cache = {}
+
+    def __get_internal(self, ele):
+        if not isinstance(ele, int):
+            ele = self.potential.electrode_index[ele]
+        if ele in self.cache:
+            return self.cache[ele]
+        res = PolyFitCache(self.fitter, self.potential.data[ele, :, :, :])
+        self.cache[ele] = res
+        return res
+
+    def get(self, ele, *args, **kwargs):
+        fit_cache = self.__get_internal(ele)
+        if args or kwargs:
+            return fit_cache.get(*args, **kwargs)
+        return fit_cache
+
+    def get_single(self, ele, *args, **kwargs):
+        fit_cache = self.__get_internal(ele)
+        return fit_cache.get_single(*args, **kwargs)
+
+    def gradient(self, ele, *args, **kwargs):
+        fit_cache = self.__get_internal(ele)
+        return fit_cache.gradient(*args, **kwargs)
