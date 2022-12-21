@@ -58,6 +58,9 @@ class LinearIndices:
         return _cartesian_to_linear(self.__sizes, idx)
 
 class CartisianIndicesIter:
+    """
+    Iterate through Cartisian index in the row major order
+    """
     def __init__(self, sizes):
         self.__sizes = sizes
         self.__value = np.zeros(len(sizes), dtype='q') # Next value
