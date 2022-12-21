@@ -192,8 +192,8 @@ class PolyFitResult:
         lindices = LinearIndices(sizes)
         cindices = CartesianIndices(sizes)
         for lidx in lindices:
-            term_order = cindices[lidx]
-            if (term_order >= order).all():
+            term_order = np.array(cindices[lidx])
+            if not (term_order >= order).all():
                 continue
             v += math.prod(_shifted_term(t, o, s) for (t, o, s)
                            in zip(term_order, order, shift)) * self.coefficient[lidx]
@@ -209,5 +209,5 @@ class PolyFitResult:
         cindices = CartesianIndices(sizes)
         for lidx in lindices:
             order = cindices[lidx]
-            coefficient[lidx] = self.shifted_coefficient(shift, order)
+            coefficient[lidx] = self._shifted_coefficient(shift, order)
         return PolyFitResult(self.orders, coefficient)
