@@ -16,7 +16,7 @@
 # License along with this library. If not,
 # see <http://www.gnu.org/licenses/>.
 
-from . import fitting, mapping
+from . import fitting, mapping, optimizers
 
 import os
 import os.path
@@ -188,3 +188,11 @@ def get_compensate_coeff1(cache, pos):
     for i in range(nfits):
         coefficient[:, i] = tuple(get_compensate_terms1(fits[i], stride_um))
     return ele_select, coefficient
+
+def solve_compensate1(cache, pos):
+    ele_select, coefficient = get_compensate_coeff1(cache, pos)
+    X = optimizers.optimize_minmax(coefficient, np.eye(10))
+    assert X.shape[1] == 10
+    return ele_select, CompensateTerms1(X[:, 0], X[:, 1], X[:, 2],
+                                        X[:, 3], X[:, 4], X[:, 5],
+                                        X[:, 6], X[:, 7], X[:, 8], X[:, 9])
