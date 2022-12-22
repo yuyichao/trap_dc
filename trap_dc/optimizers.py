@@ -19,7 +19,7 @@
 import numpy as np
 from scipy import optimize
 
-def optimize_minmax(A, y):
+def _optimize_minmax(A, y):
     """
     Find the `x` that satisfies `A @ x = y` while having the smallest maximum element.
     """
@@ -58,3 +58,14 @@ def optimize_minmax(A, y):
     res = optimize.linprog(C, A_ub=A_ub, b_ub=b_ub,
                            bounds=[(None, None) for i in range(1 + nt)])
     return B @ res.x[:nt] + x0
+
+def optimize_minmax(A, y):
+    if y.ndim == 1:
+        return _optimize_minmax(A, y)
+    ny, nx = A.shape
+    assert y.shape[0] == ny
+    nc = y.shape[1]
+    res = np.empty((nx, nc))
+    for i in range(nc):
+        res[:, i] = _optimize_minmax(A, y[:, i])
+    return res
