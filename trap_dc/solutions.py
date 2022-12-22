@@ -172,11 +172,12 @@ def compensate_fitter1(potential, sizes=(129, 5, 5)):
     fitter = fitting.PolyFitter((4, 2, 2), sizes=sizes)
     return potential.get_cache(fitter)
 
-def get_compensate_coeff1(cache, pos):
+def get_compensate_coeff1(cache, pos, electrode_min_num=20, electrode_min_dist=350):
     # pos is in xyz index
     x_coord = cache.potential.x_index_to_axis(pos[0]) * 1000
-    ele_select = mapping.find_electrodes(cache.potential.electrode_index,
-                                         x_coord, min_num=20, min_dist=350)
+    ele_select = mapping.find_electrodes(cache.potential.electrode_index, x_coord,
+                                         min_num=electrode_min_num,
+                                         min_dist=electrode_min_dist)
     ele_select = list(ele_select)
     ele_select.sort()
     fits = [cache.get(e, pos) for e in ele_select]
@@ -189,8 +190,10 @@ def get_compensate_coeff1(cache, pos):
         coefficient[:, i] = tuple(get_compensate_terms1(fits[i], stride_um))
     return ele_select, coefficient
 
-def solve_compensate1(cache, pos):
-    ele_select, coefficient = get_compensate_coeff1(cache, pos)
+def solve_compensate1(cache, pos, electrode_min_num=20, electrode_min_dist=350):
+    ele_select, coefficient = get_compensate_coeff1(
+        cache, pos, electrode_min_num=electrode_min_num,
+        electrode_min_dist=electrode_min_dist)
     X = optimizers.optimize_minmax(coefficient, np.eye(10))
     assert X.shape[1] == 10
     return ele_select, CompensateTerms1(X[:, 0], X[:, 1], X[:, 2],
