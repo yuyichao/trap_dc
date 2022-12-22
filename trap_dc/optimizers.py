@@ -55,6 +55,6 @@ def optimize_minmax(A, y):
     b_ub[:nx] = -x0
     b_ub[nx:] = x0
 
-    res = optimize.linprog(C, A_ub, b_ub)
-    print(A_ub, b_ub, B, C, res)
+    res = optimize.linprog(C, A_ub=A_ub, b_ub=b_ub,
+                           bounds=[(None, None) for i in range(1 + nt)])
     return B @ res.x[:nt] + x0
