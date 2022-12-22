@@ -199,3 +199,10 @@ def solve_compensate1(cache, pos, electrode_min_num=20, electrode_min_dist=350):
     return ele_select, CompensateTerms1(X[:, 0], X[:, 1], X[:, 2],
                                         X[:, 3], X[:, 4], X[:, 5],
                                         X[:, 6], X[:, 7], X[:, 8], X[:, 9])
+
+def load_short_map(fname):
+    m = np.loadtxt(fname, dtype=str, delimiter=',')
+    res = {}
+    for i in range(m.shape[0]):
+        res[m[i, 0]] = m[i, 1]
+    return res
