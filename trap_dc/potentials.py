@@ -130,7 +130,7 @@ def _get_electrode_names(aliases, electrode_names, trap):
         return electrode_names
     if aliases is None:
         return [[name] for name in _raw_electrode_names(trap)]
-    return _aliases_to_names(aliases, trap)
+    return _alias_to_names(aliases, trap)
 
 class RawPotential:
     @classmethod
