@@ -13,6 +13,21 @@ sys.path.append(root_path)
 
 from trap_dc import solutions, potentials
 
+if len(sys.argv) != 3:
+    print(f'''
+Calculate RF center location along trap axis.
+
+Usage:
+
+    {sys.argv[0]} trap_name potential_file
+
+Arguments:
+
+    trap_name: one of `hoa`, `pheonix` or `peregrine`.
+
+    potential_file: the voltage solution file provided by Sandia.''')
+    exit(1)
+
 trap = sys.argv[1]
 pfile = sys.argv[2]
 

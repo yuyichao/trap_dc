@@ -18,6 +18,20 @@ centers = solutions.CenterTracker(trap="phoenix")
 short_map = solutions.load_short_map(
     os.path.join(data_path, "electrode_short_red_202212.csv"))
 
+if len(sys.argv) != 2:
+    print(f'''
+Example script to calculate a set of voltage solutions for the red chamber,
+taken into account known shorted electrodes as of Dec. 2022.
+
+Usage:
+
+    {sys.argv[0]} potential_file
+
+Arguments:
+
+    potential_file: the voltage solution file provided by Sandia.''')
+    exit(1)
+
 potential_file = sys.argv[1]
 potential = potentials.Potential.import_64(potential_file, aliases=short_map)
 fits_cache = solutions.compensate_fitter3(potential)
