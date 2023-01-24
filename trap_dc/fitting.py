@@ -20,6 +20,15 @@ import math
 import numpy as np
 from scipy.special import binom
 
+if hasattr(math, 'prod'):
+    math_prod = math.prod
+else:
+    def math_prod(a):
+        p = 1
+        for v in a:
+            p = p * v
+        return p
+
 def to_tuple(v):
     if isinstance(v, tuple):
         return v
@@ -50,7 +59,7 @@ class LinearIndices:
         return iter(reversed(range(len(self))))
 
     def __len__(self):
-        return math.prod(self.__sizes)
+        return math_prod(self.__sizes)
     def __getitem__(self, idx):
         idx = to_tuple(idx)
         if len(idx) == 1:
@@ -89,7 +98,7 @@ class CartesianIndices:
         return CartisianIndicesIter(self.__sizes)
 
     def __len__(self):
-        return math.prod(self.__sizes)
+        return math_prod(self.__sizes)
     def __getitem__(self, idx):
         idx = to_tuple(idx)
         if len(idx) == 1:
@@ -112,8 +121,8 @@ class PolyFitter:
             center = np.array(center, dtype='d')
 
         assert (sizes > orders).all()
-        nterms = math.prod(orders + 1)
-        npoints = math.prod(sizes)
+        nterms = math_prod(orders + 1)
+        npoints = math_prod(sizes)
 
         self.coefficient = np.empty((npoints, nterms))
         pos_lidxs = LinearIndices(sizes)
@@ -124,7 +133,7 @@ class PolyFitter:
         scale_max = np.maximum((sizes - 1) / 2, 1.0)
         for iorder in ord_lidxs:
             order = np.array(ord_cidxs[iorder])
-            self.scales[iorder] = 1 / math.prod(scale_max**order)
+            self.scales[iorder] = 1 / math_prod(scale_max**order)
 
         # Index for position
         for ipos in pos_lidxs:
@@ -133,7 +142,7 @@ class PolyFitter:
             # Index for the polynomial order
             for iorder in ord_lidxs:
                 order = np.array(ord_cidxs[iorder])
-                self.coefficient[ipos, iorder] = (math.prod(pos**order) *
+                self.coefficient[ipos, iorder] = (math_prod(pos**order) *
                                                   self.scales[iorder])
 
     def fit(self, data):
@@ -178,7 +187,7 @@ class PolyFitResult:
         pos = np.array(pos)
         for iorder in lindices:
             order = cindices[iorder]
-            v += self.coefficient[iorder] * math.prod(pos**order)
+            v += self.coefficient[iorder] * math_prod(pos**order)
         return v
 
     def __getitem__(self, order):
@@ -198,7 +207,7 @@ class PolyFitResult:
             term_order = np.array(cindices[lidx])
             if not (term_order >= order).all():
                 continue
-            v += math.prod(_shifted_term(t, o, s) for (t, o, s)
+            v += math_prod(_shifted_term(t, o, s) for (t, o, s)
                            in zip(term_order, order, shift)) * self.coefficient[lidx]
         return v
 
